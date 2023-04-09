@@ -5,8 +5,8 @@
 @using Onigns.HelpDesk.UI.Data;
 @using Onigns.HelpDesk.UI.Services;
 @using Onigns.HelpDesk.UI.ViewModels;
-@inject UserManager<IdentityUser> _UserManager
-@inject RoleManager<IdentityRole> _RoleManager
+@inject IConfiguration _configuration
+@inject EmailSenderService _EmailSender
 
 @inherits OwningComponentBase<HelpDeskService>
 
@@ -28,8 +28,8 @@
                                        Value="ID"></DropDownListFieldSettings>
         </SfDropDownList>
     </div>
-    <div>        
-        <SfDatePicker ID="TicketDate" Placeholder="Ticket Date" 
+    <div>
+        <SfDatePicker ID="TicketDate" Placeholder="Ticket Date"
                       FloatLabelType="@FloatLabelType.Always"
                       @bind-Value="@objHelpDeskTicket.TicketDate"
                       Max="DateTime.Now"
@@ -50,7 +50,7 @@
     </div>
     <br /><br />
     <div class="e-footer-content">
-        <div class="button-container">            
+        <div class="button-container">
             <button type="submit" class="e-btn e-normal e-primary">Save</button>
         </div>
     </div>
@@ -87,24 +87,33 @@
         try
         {
             // Create a HelpDeskTickets.
-            HelpDeskTickets NewHelpDeskTickets =            new HelpDeskTickets();
+            HelpDeskTickets NewHelpDeskTickets = new HelpDeskTickets();
             // Set the values to the values entered
             // in the form.
-            NewHelpDeskTickets.TicketDate =            objHelpDeskTicket.TicketDate;
-            NewHelpDeskTickets.TicketDescription =            objHelpDeskTicket.TicketDescription;
-            NewHelpDeskTickets.TicketRequesterEmail =            objHelpDeskTicket.TicketRequesterEmail;
-            NewHelpDeskTickets.TicketStatus =            objHelpDeskTicket.TicketStatus;
+            NewHelpDeskTickets.TicketDate = objHelpDeskTicket.TicketDate;
+            NewHelpDeskTickets.TicketDescription = objHelpDeskTicket.TicketDescription;
+            NewHelpDeskTickets.TicketRequesterEmail = objHelpDeskTicket.TicketRequesterEmail;
+            NewHelpDeskTickets.TicketStatus = objHelpDeskTicket.TicketStatus;
             // Create a new GUID for this help desk ticket.
-            NewHelpDeskTickets.TicketGuid =            System.Guid.NewGuid().ToString();
+            NewHelpDeskTickets.TicketGuid = System.Guid.NewGuid().ToString();
             // Save the new help desk ticket.
-            var result =            @Service.CreateTicketAsync(NewHelpDeskTickets);
+            var result = @Service.CreateTicketAsync(NewHelpDeskTickets);
+
+            // Send email.
+            string AdministratorEmail = _configuration["SenderEmail"];
+            await _EmailSender.SendEmail(
+                "Help Desk Ticket Created",
+                AdministratorEmail, // No need to pass an email because it goes to administrator.
+                NewHelpDeskTickets.TicketGuid
+            );
+
             // Clear the form.
             objHelpDeskTicket = new HelpDeskTicket();
             // Show the Toast.
             ToastContent = "Saved!";
             await Task.Delay(100);
             await this.ToastObj.ShowAsync();
-            
+
         }
         catch (Exception ex)
         {

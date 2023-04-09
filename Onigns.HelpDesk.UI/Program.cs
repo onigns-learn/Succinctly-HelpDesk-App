@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Onigns.HelpDesk.UI.Areas.Identity;
 using Onigns.HelpDesk.UI.Data;
@@ -24,12 +25,16 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddScoped<AuthenticationStateProvider, RevalidatingIdentityAuthenticationStateProvider<IdentityUser>>();
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddScoped<HelpDeskService>();
+builder.Services.AddScoped<EmailSenderService>();
 
 // Syncfusion support
 builder.Services.AddSyncfusionBlazor();
 builder.Services.AddLocalization();
 
 var app = builder.Build();
+
+var key = builder.Configuration.GetValue<string>("Syncfusion:Key");
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense(key);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
